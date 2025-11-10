@@ -43,16 +43,28 @@ app.post("/api/send", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Missing toEmail" });
     }
 
-    const { data, error } = await resend.emails.send({
-      from: `Kamyab Rouhifar <${String(process.env.FROM_EMAIL)}>`,
-      to: [toEmail],
-      subject: subject ?? "Hello from Bun + Express + Resend",
-      // You can pass a React element directly:
-      react: React.createElement(EmailTemplate, {
-        name: firstName ?? "Friend",
-        message: message ?? "It works! 🎉",
-      }),
-    });
+    const { data, error } = await resend.batch.send([
+      {
+        from: `Ritz Shrivastav <${String(process.env.FROM_EMAIL)}>`,
+        to: [toEmail],
+        subject: subject ?? "Thanks for reaching out!",
+        // You can pass a React element directly:
+        react: React.createElement(EmailTemplate, {
+          firstName: firstName ?? "Friend",
+          message: message ?? "It works! 🎉",
+        }),
+      },
+      {
+        from: `${firstName} <${String(process.env.FROM_EMAIL)}>`,
+        to: "hritika12245@gmail.com",
+        subject: subject ?? "Thanks for reaching out!",
+        react: React.createElement(EmailTemplate, {
+          firstName: firstName ?? "Friend",
+          owner: true,
+          message: message ?? "It works! 🎉",
+        }),
+      },
+    ]);
 
     if (error) {
       return res.status(500).json({ ok: false, error });

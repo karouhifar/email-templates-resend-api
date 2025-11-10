@@ -16,16 +16,18 @@ import {
 } from "@react-email/components";
 
 type Props = {
-  name: string;
+  firstName: string;
   message: string;
+  owner?: boolean;
   illustrationUrl?: string; // remote image URL for the header illustration
   linkedinUrl?: string;
   brandName?: string;
 };
 
 export default function EmailTemplate({
-  name = "Friend",
+  firstName = "Friend",
   message,
+  owner = false,
   illustrationUrl = "http://cdn.mcauto-images-production.sendgrid.net/8b7dd60bd1301950/7f28136d-52c2-4a64-97c9-89913f7d258d/472x536.png", // replace with your asset
   linkedinUrl = "https://www.linkedin.com/in/hirteeka-shrivastav/",
   brandName = "DreamsDigital.ca",
@@ -33,7 +35,7 @@ export default function EmailTemplate({
   return (
     <Html>
       <Head />
-      <Preview>Thanks {name}, Your message is in my inbox.</Preview>
+      <Preview>Thanks {firstName}, Your message is in my inbox.</Preview>
 
       {/* Tailwind styles will be inlined for email clients */}
       <Tailwind>
@@ -56,19 +58,23 @@ export default function EmailTemplate({
             </Section>
 
             <Section className="text-center mt-8">
-              <Text className="text-[16px] leading-6 text-[#0f172a] m-0">
-                Thanks{" "}
-                <span className="font-semibold">{`{${""}}${"name"}`}</span> for
-                reaching out and for your interest in my work! Your message has
-                been successfully delivered to my inbox.
-              </Text>
+              {!owner && (
+                <Text className="text-[16px] leading-6 text-[#0f172a] m-0">
+                  Thanks{" "}
+                  <span className="font-semibold">{`{${""}}${firstName}`}</span>{" "}
+                  for reaching out and for your interest in my work! Your
+                  message has been successfully delivered to my inbox.
+                </Text>
+              )}
 
               <Text className="text-[16px] leading-6 text-[#0f172a] mt-4">
-                I’ll be reviewing your message.
+                {owner
+                  ? `you received message from ${firstName}`
+                  : "I’ll be reviewing your message."}
               </Text>
 
               <Text className="text-[16px] leading-6 text-[#0f172a] mt-4 text-left">
-                Your message :
+                {owner ? "Your Client Message" : "Your Message"} :
               </Text>
 
               <div className="bg-gray-300 rounded-xl">
