@@ -33,14 +33,14 @@ export default function EmailTemplate({
   return (
     <Html>
       <Head />
-      <Preview>Thanks, {name}! Your message is in my inbox.</Preview>
+      <Preview>Thanks {name}, Your message is in my inbox.</Preview>
 
       {/* Tailwind styles will be inlined for email clients */}
       <Tailwind>
         <Body className="bg-[#fbf1f4] m-0 p-0">
           <Container className="mx-auto max-w-[600px] px-6">
             <Section className="text-center pt-10">
-              <Heading className="text-[36px] leading-[1.2] font-extrabold text-[#103b39] m-0">
+              <Heading className="text-md leading-[1.2] font-extrabold text-[#103b39] m-0">
                 Message received
               </Heading>
 
@@ -67,7 +67,11 @@ export default function EmailTemplate({
                 I’ll be reviewing your message.
               </Text>
 
-              <div className="bg-gray-300">
+              <Text className="text-[16px] leading-6 text-[#0f172a] mt-4 text-left">
+                Your message :
+              </Text>
+
+              <div className="bg-gray-300 rounded-xl">
                 <Text className="text-[16px] leading-6 text-[#0f172a] m-4">
                   {message}
                 </Text>
