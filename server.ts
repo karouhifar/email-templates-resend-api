@@ -56,7 +56,7 @@ app.post("/api/send", async (req, res) => {
       },
       {
         from: `${firstName} <${String(process.env.FROM_EMAIL)}>`,
-        to: "hritika12245@gmail.com",
+        to: "kamikomi008@gmail.com",
         subject: subject ?? "Thanks for reaching out!",
         react: React.createElement(EmailTemplate, {
           firstName: firstName ?? "Friend",
