@@ -49,7 +49,7 @@ export default function EmailTemplate({
               <div className="mt-6">
                 <Img
                   src={illustrationUrl}
-                  width="220"
+                  width="130"
                   height="auto"
                   alt="Message received"
                   className="mx-auto rounded-lg"
