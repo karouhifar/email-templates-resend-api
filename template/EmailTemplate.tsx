@@ -28,7 +28,7 @@ export default function EmailTemplate({
   firstName = "Friend",
   message,
   owner = false,
-  illustrationUrl = "http://cdn.mcauto-images-production.sendgrid.net/8b7dd60bd1301950/7f28136d-52c2-4a64-97c9-89913f7d258d/472x536.png", // replace with your asset
+  illustrationUrl = "https://email.dreamsdigital.ca/emails/email-img-ritz.p", // replace with your asset
   linkedinUrl = "https://www.linkedin.com/in/hirteeka-shrivastav/",
   brandName = "DreamsDigital.ca",
 }: Props) {
