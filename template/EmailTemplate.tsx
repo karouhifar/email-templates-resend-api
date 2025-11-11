@@ -60,8 +60,7 @@ export default function EmailTemplate({
             <Section className="text-center mt-8">
               {!owner && (
                 <Text className="text-[16px] leading-6 text-[#0f172a] m-0">
-                  Thanks{" "}
-                  <span className="font-semibold">{`{${""}}${firstName}`}</span>{" "}
+                  Thanks <span className="font-semibold">{`${firstName}`}</span>{" "}
                   for reaching out and for your interest in my work! Your
                   message has been successfully delivered to my inbox.
                 </Text>
