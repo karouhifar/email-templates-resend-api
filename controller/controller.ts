@@ -9,11 +9,10 @@ export const OwnerController = {
   },
 
   get: async (req: Request, res: Response) => {
-    const { email } = req.params;
-    if (!email)
-      return res.status(400).json({ ok: false, error: "Missing email" });
+    const { key } = req.params;
+    if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
     const ownerDTO = new OwnerDTO();
-    const owner = ownerDTO.findByEmail(email);
+    const owner = ownerDTO.findByKeyId(key);
     if (!owner)
       return res.status(404).json({ ok: false, error: "Owner not found" });
     res.json({ ok: true, data: owner });
