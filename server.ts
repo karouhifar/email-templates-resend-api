@@ -3,18 +3,16 @@ import cors from "cors";
 import { Resend } from "resend";
 import React from "react";
 import EmailTemplate from "./template/EmailTemplate";
+import ownerRoutes from "./routes/owner.routes";
+import { closeOnExit, initDb } from "./db/database";
 
 const app = express();
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// --- JSON body parsing
-app.use(express.json());
-
+initDb();
+const resend = new Resend(Bun.env.RESEND_API_KEY);
 // --- CORS: ONLY allow https://ritzshrivastav.com
-const parsedOrigin = !!process.env.AllowedOrigins
-  ? process.env.AllowedOrigins?.split(",")
+const parsedOrigin = !!Bun.env.AllowedOrigins
+  ? Bun.env.AllowedOrigins?.split(",")
   : "";
-
 app.use(
   cors({
     origin: parsedOrigin,
@@ -32,6 +30,11 @@ app.options("/api/send", (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(204);
 });
+// --- JSON body parsing
+app.use(express.json());
+// --- Owner routes
+app.get("/", (_req, res) => res.send("OK"));
+app.use("/owners", ownerRoutes);
 
 // --- Ported Next.js handler -> Express route
 app.post("/api/send", async (req, res) => {
@@ -45,7 +48,7 @@ app.post("/api/send", async (req, res) => {
 
     const { data, error } = await resend.batch.send([
       {
-        from: `Ritz Shrivastav <${String(process.env.FROM_EMAIL)}>`,
+        from: `Ritz Shrivastav <${String(Bun.env.FROM_EMAIL)}>`,
         to: [toEmail],
         subject: subject ?? "Thanks for reaching out!",
         // You can pass a React element directly:
@@ -55,7 +58,7 @@ app.post("/api/send", async (req, res) => {
         }),
       },
       {
-        from: `${firstName} <${String(process.env.FROM_EMAIL)}>`,
+        from: `${firstName} <${String(Bun.env.FROM_EMAIL)}>`,
         to: ["techfiteam@gmail.com"],
         subject: subject ?? "Thanks for reaching out!",
         react: React.createElement(EmailTemplate, {
@@ -77,7 +80,10 @@ app.post("/api/send", async (req, res) => {
   }
 });
 
-const PORT = Number(process.env.PORT || 3001);
-app.listen(PORT, () => {
+// --- Start the server listening :
+const PORT = Number(Bun.env.PORT || 3001);
+const server = app.listen(PORT, () => {
   console.log(`✅ Bun/Express server listening on http://localhost:${PORT}`);
 });
+
+closeOnExit(server);
