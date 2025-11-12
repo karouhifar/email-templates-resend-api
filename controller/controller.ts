@@ -21,8 +21,8 @@ export const OwnerController = {
   upsert: async (req: Request, res: Response) => {
     const { isOwner, name, email } = req.body ?? {};
     const ownerDTO = new OwnerDTO();
-    const saved = ownerDTO.create({ isOwner, name, email });
-    res.status(201).json({ ok: true, data: saved });
+    ownerDTO.create({ isOwner, name, email });
+    res.status(201).json({ ok: true });
   },
 
   remove: async (req: Request, res: Response) => {

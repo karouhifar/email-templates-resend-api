@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 
 const DB_PATH = Bun.env.DB_PATH;
 
-export const db = new Database(DB_PATH, { create: true });
+export const db = new Database(DB_PATH, { create: true, strict: true });
 
 // Initialize the database with a sample table if it doesn't exist
 // *
