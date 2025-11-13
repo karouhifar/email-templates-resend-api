@@ -54,6 +54,16 @@ export class Owner {
   get getUpdatedAt(): string | undefined {
     return this.updated_at;
   }
+
+  static fromRow(row: Owner) {
+    return new Owner(
+      row.name,
+      row.isOwner ?? row.isOwner ?? 0,
+      row.email,
+      row.created_at ?? new Date().toISOString(),
+      row.updated_at ?? new Date().toISOString()
+    );
+  }
 }
 
 export class OwnerDTO {
@@ -74,12 +84,13 @@ export class OwnerDTO {
       .get(email);
   }
   findByKeyId(key_id: string): Owner | null {
-    return db
+    const row = db
       .query<
         Owner,
         [string]
       >("SELECT key_id, name, email, IsOwner, created_at FROM owners WHERE key_id = ?")
       .get(key_id);
+    return row ? Owner.fromRow(row) : null;
   }
   create(ownerData: Omit<OwnerProps, "key_id">): void {
     const stmt = db.prepare(
