@@ -39,15 +39,12 @@ export function initDb() {
     {
       key_id: nanoid(10),
       name: "Mini",
-      email: "mini@dreamsdigital.ca",
+      email: "support@dreamsdigital.ca",
     },
   ];
   db.transaction((data: typeof seedData) => {
-    console.log(data);
     for (const row of data) seed.run(row.key_id, row.name, row.email);
-    console.log("Database initialized and seeded !!!!");
   })(seedData);
-  // eslint-disable-next-line no-console
 }
 
 export function closeDb() {

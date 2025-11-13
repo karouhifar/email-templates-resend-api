@@ -18,8 +18,8 @@ import {
 type Props = {
   firstName: string;
   message: string;
+  email: string;
   owner?: boolean;
-  illustrationUrl?: string; // remote image URL for the header illustration
   linkedinUrl?: string;
   brandName?: string;
 };
@@ -27,8 +27,8 @@ type Props = {
 export default function EmailTemplate({
   firstName = "Friend",
   message,
-  owner = false,
-  illustrationUrl = "https://email.dreamsdigital.ca/emails/email-img-ritz.png", // replace with your asset
+  email,
+  owner = false, // replace with your asset
   linkedinUrl = "https://www.linkedin.com/in/hirteeka-shrivastav/",
   brandName = "DreamsDigital.ca",
 }: Props) {
@@ -48,9 +48,8 @@ export default function EmailTemplate({
 
               <div className="mt-6">
                 <Img
-                  src={illustrationUrl}
-                  width="130"
-                  height="auto"
+                  src={"cid:logo-image"}
+                  width="200"
                   alt="Message received"
                   className="mx-auto rounded-lg"
                 />
@@ -67,9 +66,13 @@ export default function EmailTemplate({
               )}
 
               <Text className="text-[16px] leading-6 text-[#0f172a] mt-4">
-                {owner
-                  ? `you received message from ${firstName}`
-                  : "I’ll be reviewing your message."}
+                {owner ? (
+                  <>
+                    you received message from {firstName} <b>{email}</b>
+                  </>
+                ) : (
+                  "I’ll be reviewing your message."
+                )}
               </Text>
 
               <Text className="text-[16px] leading-6 text-[#0f172a] mt-4 text-left">
@@ -83,12 +86,15 @@ export default function EmailTemplate({
               </div>
 
               <div className="mt-8 mb-2">
-                <Button
-                  href={linkedinUrl}
-                  className="inline-block rounded-md px-6 py-3 text-[16px] font-semibold no-underline bg-[#6e4df5] text-white"
-                >
-                  Contact me through LinkedIn
-                </Button>
+                {!owner && (
+                  <Button
+                    href={linkedinUrl}
+                    className="inline-block rounded-md px-6 py-3 text-[16px] font-semibold no-underline bg-[#6e4df5] text-white"
+                  >
+                    Contact me through LinkedIn
+                  </Button>
+                )}
+                <Text className="text-[12px] text-[#94a3b8]">{email}</Text>
               </div>
             </Section>
 
@@ -96,7 +102,7 @@ export default function EmailTemplate({
               <Hr className="border-[#e2e8f0] my-6" />
 
               <Text className="text-[12px] text-[#94a3b8]">
-                <span className="mr-1">💙</span> POWERED BY {brandName}
+                <span className="mr-1">🩵</span> POWERED BY {brandName}
               </Text>
 
               <div className="h-8" />

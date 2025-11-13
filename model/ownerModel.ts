@@ -107,13 +107,9 @@ export class OwnerDTO {
       result.getIsOwner,
       result.getEmail
     );
-    // eslint-disable-next-line no-console
-    console.log("Owner created with key_id:", result.getKeyId);
   }
   remove({ key_id }: Pick<OwnerProps, "key_id">): void {
     const stmt = db.prepare("DELETE FROM owners WHERE key_id = :key_id");
     const res = stmt.run(key_id);
-    // eslint-disable-next-line no-console
-    console.log("Owner deleted with key_id:", key_id);
   }
 }
