@@ -5,7 +5,8 @@ import React from "react";
 import EmailTemplate from "./template/EmailTemplate";
 import ownerRoutes from "./routes/owner.routes";
 import { closeOnExit, initDb } from "./db/database";
-import { OwnerDTO } from "./model";
+import { Owner, OwnerDTO } from "./model";
+import { isEmpty } from "./utils/lib";
 
 const app = express();
 initDb();
@@ -43,15 +44,20 @@ app.post("/api/send/:key", async (req, res) => {
 
   try {
     const { toEmail, firstName, message, subject } = req.body ?? {};
-    const owner = new OwnerDTO().findByKeyId(key);
+
+    const owner = new OwnerDTO().findByKeyId(key) as unknown as {
+      email: string;
+      key_id: string;
+      name: string;
+    };
+
     // Basic guard
-    if (!toEmail || !owner) {
+    if (!toEmail || isEmpty(owner)) {
       return res.status(400).json({ ok: false, error: "Missing toEmail" });
     }
-
     const { data, error } = await resend.batch.send([
       {
-        from: `${owner.getName} <${String(Bun.env.FROM_EMAIL)}>`,
+        from: `${owner.name} <${String(Bun.env.FROM_EMAIL)}>`,
         to: [toEmail],
         subject: subject ?? "Thanks for reaching out!",
         // You can pass a React element directly:
@@ -62,11 +68,11 @@ app.post("/api/send/:key", async (req, res) => {
       },
       {
         from: `${firstName} <${String(Bun.env.FROM_EMAIL)}>`,
-        to: [owner.getEmail],
+        to: [owner.email],
         subject: subject ?? "Thanks for reaching out!",
         react: React.createElement(EmailTemplate, {
           firstName: firstName ?? "Friend",
-          owner: owner.getIsOwner === 1,
+          owner: true,
           message: message ?? "It works! 🎉",
         }),
       },
