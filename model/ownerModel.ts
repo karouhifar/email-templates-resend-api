@@ -78,7 +78,7 @@ export class OwnerDTO {
       .query<
         Owner,
         [string]
-      >("SELECT key_id, name, email, created_at FROM owners WHERE key_id = ?")
+      >("SELECT key_id, name, email, IsOwner, created_at FROM owners WHERE key_id = ?")
       .get(key_id);
   }
   create(ownerData: Omit<OwnerProps, "key_id">): void {
