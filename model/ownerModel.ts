@@ -1,10 +1,11 @@
+import { prisma } from "@/utils/prisma";
 import { nanoid } from "nanoid";
-import { db } from "../db/database";
+import { couldStartTrivia } from "typescript";
 
 export interface OwnerProps {
   key_id: string;
   name: string;
-  isOwner: number;
+  isOwner: boolean;
   email: string;
   created_at?: string;
   updated_at?: string;
@@ -13,19 +14,20 @@ export interface OwnerProps {
 export class Owner {
   private key_id: string;
   private name: string;
-  private isOwner: number;
+  private isOwner: boolean;
   private email: string;
   private created_at?: string;
   private updated_at?: string;
 
   constructor(
+    key_id: string,
     name: string,
-    isOwner: number,
+    isOwner: boolean,
     email: string,
     created_at?: string,
     updated_at?: string
   ) {
-    this.key_id = nanoid(10);
+    this.key_id = key_id ?? nanoid(10);
     this.name = name;
     this.isOwner = isOwner;
     this.email = email;
@@ -41,7 +43,7 @@ export class Owner {
     return this.name;
   }
 
-  get getIsOwner(): number {
+  get getIsOwner(): boolean {
     return this.isOwner;
   }
 
@@ -57,6 +59,7 @@ export class Owner {
 
   static fromRow(row: Owner) {
     return new Owner(
+      row.key_id,
       row.name,
       row.isOwner ?? row.isOwner ?? 0,
       row.email,
@@ -70,46 +73,36 @@ export class OwnerDTO {
   // --- CRUD operations for Owner model
   constructor() {}
 
-  findAll(): Array<Owner> {
-    return db
-      .query<Owner, []>("SELECT key_id, name, email, created_at FROM owners")
-      .all();
+  async findAll(): Promise<Array<Owner>> {
+    const rows = await prisma.owner.findMany();
+    return rows.map((row) => Owner.fromRow(row as any));
   }
-  findByEmail(email: string): Owner | null {
-    return db
-      .query<
-        Owner,
-        [string]
-      >("SELECT key_id, name, email, created_at FROM owners WHERE email = ?")
-      .get(email);
+  async findByEmail(email: string): Promise<Owner | null> {
+    const row = await prisma.owner.findUnique({ where: { email } });
+    return row ? Owner.fromRow(row as any) : null;
   }
-  findByKeyId(key_id: string): Owner | null {
-    const row = db
-      .query<
-        Owner,
-        [string]
-      >("SELECT key_id, name, email, IsOwner, created_at FROM owners WHERE key_id = ?")
-      .get(key_id);
-    return row ? Owner.fromRow(row) : null;
+  async findByKeyId(key_id: string): Promise<Owner | null> {
+    const row = await prisma.owner.findUnique({ where: { key_id } });
+
+    return row ? Owner.fromRow(row as any) : null;
   }
-  create(ownerData: Omit<OwnerProps, "key_id">): void {
-    const stmt = db.prepare(
-      "INSERT INTO owners (key_id, name, isOwner, email) VALUES (?, ?, ?, ?)"
-    );
+  async create(ownerData: Omit<OwnerProps, "key_id">): Promise<void> {
     const result = new Owner(
+      nanoid(10),
       ownerData.name,
       ownerData.isOwner,
       ownerData.email
     );
-    stmt.run(
-      result.getKeyId,
-      result.getName,
-      result.getIsOwner,
-      result.getEmail
-    );
+    await prisma.owner.create({
+      data: {
+        key_id: result.getKeyId,
+        name: result.getName,
+        isOwner: result.getIsOwner,
+        email: result.getEmail,
+      },
+    });
   }
-  remove({ key_id }: Pick<OwnerProps, "key_id">): void {
-    const stmt = db.prepare("DELETE FROM owners WHERE key_id = :key_id");
-    const res = stmt.run(key_id);
+  async remove({ key_id }: Pick<OwnerProps, "key_id">): Promise<void> {
+    await prisma.owner.delete({ where: { key_id } });
   }
 }

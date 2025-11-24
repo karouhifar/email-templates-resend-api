@@ -1,14 +1,14 @@
 import express from "express";
 import cors from "cors";
-import { closeOnExit, initDb } from "./db/database";
+import { closeOnExit, initDb } from "@/db/database";
 import { ownerRoute, emailRoute } from "./routes";
 
 const app = express();
 initDb();
 
 // --- CORS: ONLY allow https://ritzshrivastav.com
-const parsedOrigin = !!Bun.env.AllowedOrigins
-  ? Bun.env.AllowedOrigins?.split(",")
+const parsedOrigin = !!process.env.AllowedOrigins
+  ? process.env.AllowedOrigins?.split(",")
   : "";
 app.use(
   cors({
@@ -35,7 +35,7 @@ app.use("/owners", ownerRoute);
 app.use("/api", emailRoute);
 
 // --- Start the server listening :
-const PORT = Number(Bun.env.PORT || 3001);
+const PORT = Number(process.env.PORT || 3001);
 const server = app.listen(PORT, () => {
   console.log(`✅ Bun/Express server listening on http://localhost:${PORT}`);
 });

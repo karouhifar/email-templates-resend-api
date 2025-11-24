@@ -8,7 +8,7 @@ import { EmailTemplate } from "../views/template";
 export const OwnerController = {
   list: async (req: Request, res: Response) => {
     const ownerDTO = new OwnerDTO();
-    const owners = ownerDTO.findAll();
+    const owners = await ownerDTO.findAll();
     res.json({ ok: true, data: owners });
   },
 
@@ -16,27 +16,32 @@ export const OwnerController = {
     const { key } = req.params;
     if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
     const ownerDTO = new OwnerDTO();
-    const owner = ownerDTO.findByKeyId(key);
+    const owner = await ownerDTO.findByKeyId(key);
     if (!owner)
       return res.status(404).json({ ok: false, error: "Owner not found" });
     res.json({ ok: true, data: owner });
   },
 
   upsert: async (req: Request, res: Response) => {
-    const { isOwner, name, email } = req.body ?? {};
-    const ownerDTO = new OwnerDTO();
-    ownerDTO.create({ isOwner, name, email });
-    res.status(201).json({ ok: true });
+    try {
+      const { isOwner, name, email } = req.body ?? {};
+      const ownerDTO = new OwnerDTO();
+
+      await ownerDTO.create({ isOwner, name, email });
+      res.status(201).json({ ok: true });
+    } catch (error) {
+      res.status(400).json({ error: "Please use unique key" });
+    }
   },
 
   remove: async (req: Request, res: Response) => {
     const { key } = req.params;
     if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
     const ownerDTO = new OwnerDTO();
-    const exists = ownerDTO.findByKeyId(key);
+    const exists = await ownerDTO.findByKeyId(key);
     if (!exists)
       return res.status(404).json({ ok: false, error: "Owner not found" });
-    ownerDTO.remove({ key_id: key });
+    await ownerDTO.remove({ key_id: key });
     res.json({ ok: true });
   },
 };
@@ -44,13 +49,13 @@ export const OwnerController = {
 export const EmailController = {
   send: async (req: Request, res: Response) => {
     const { key } = req.params;
-    const resend = new Resend(Bun.env.RESEND_API_KEY);
+    const resend = new Resend(process.env.RESEND_API_KEY);
     try {
       const { toEmail, firstName, message, subject } = req.body ?? {};
       if (!key)
         return res.status(400).json({ ok: false, error: "Missing key" });
 
-      const owner = new OwnerDTO().findByKeyId(key);
+      const owner = await new OwnerDTO().findByKeyId(key);
 
       // Basic guard
       if (!toEmail || isEmpty(owner) || !owner?.getEmail) {
@@ -77,7 +82,7 @@ export const EmailController = {
       ];
 
       //   {
-      //     from: `${owner?.getName} <${String(Bun.env.FROM_EMAIL)}>`,
+      //     from: `${owner?.getName} <${String(process.env.FROM_EMAIL)}>`,
       //     to: [toEmail],
 
       //     subject: subject ?? "Thanks for reaching out!",
@@ -89,7 +94,7 @@ export const EmailController = {
       //     }),
       //   },
       //   {
-      //     from: `${firstName} <${String(Bun.env.FROM_EMAIL)}>`,
+      //     from: `${firstName} <${String(process.env.FROM_EMAIL)}>`,
       //     to: [owner?.getEmail],
       //     subject: subject ?? "Thanks for reaching out!",
       //     react: React.createElement(EmailTemplate, {
@@ -119,7 +124,7 @@ export const EmailController = {
             message,
           }) =>
             resend.emails.send({
-              from: `${ownerName} <${String(Bun.env.FROM_EMAIL)}>`,
+              from: `${ownerName} <${String(process.env.FROM_EMAIL)}>`,
               to: [clientEmail],
               subject: subject ?? "Thanks for reaching out!",
               react: React.createElement(EmailTemplate, {

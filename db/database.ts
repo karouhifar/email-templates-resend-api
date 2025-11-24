@@ -1,55 +1,35 @@
-import { Database } from "bun:sqlite";
 import { nanoid } from "nanoid";
+import { prisma } from "@/utils/prisma";
 
-const DB_PATH = Bun.env.DB_PATH;
-
-export const db = new Database(DB_PATH, { create: true, strict: true });
+const seedData = [
+  {
+    name: "Ritz Shrivastav",
+    email: "hritika12245@gmail.com",
+  },
+  {
+    name: "Kamyab Rouhifar",
+    email: "karouhifar@gmail.com",
+  },
+  {
+    name: "Mini",
+    email: "support@dreamsdigital.ca",
+  },
+];
 
 // Initialize the database with a sample table if it doesn't exist
 // *
 // Owners table to manage email owners
 // **
-export function initDb() {
-  db.run(`
-  CREATE TABLE IF NOT EXISTS owners (
-    key_id     TEXT PRIMARY KEY,
-    name       TEXT NOT NULL,
-    email      TEXT NOT NULL UNIQUE,
-    IsOwner    INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )
-`);
-  const seed = db.prepare(`
-    INSERT OR IGNORE INTO owners (key_id, name, email)
-    VALUES (?, ?, ?)
-`);
-
-  const seedData = [
-    {
-      key_id: nanoid(10),
-      name: "Ritz Shrivastav",
-      email: "hritika12245@gmail.com",
-    },
-    {
-      key_id: nanoid(10),
-      name: "Kamyab Rouhifar",
-      email: "karouhifar@gmail.com",
-    },
-    {
-      key_id: nanoid(10),
-      name: "Mini",
-      email: "support@dreamsdigital.ca",
-    },
-  ];
-  db.transaction((data: typeof seedData) => {
-    for (const row of data) seed.run(row.key_id, row.name, row.email);
-  })(seedData);
+export async function initDb() {
+  await prisma.owner.createMany({
+    data: seedData.map((KeyObject) => ({ ...KeyObject, key_id: nanoid(10) })),
+    skipDuplicates: true,
+  });
 }
 
-export function closeDb() {
+export async function closeDb() {
   try {
-    db.close();
+    await prisma.$disconnect();
     // eslint-disable-next-line no-console
     console.log("SQLite connection closed.");
   } catch (e) {
@@ -65,6 +45,7 @@ export function closeOnExit(server: import("http").Server) {
     console.log(`\n${signal} received — shutting down...`);
     server.close(() => {
       closeDb();
+      console.log(`\n${signal} received — Database closed...`);
       process.exit(0);
     });
   };
