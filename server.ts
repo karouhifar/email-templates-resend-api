@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
 import { closeOnExit, initDb } from "@/db/database";
 import { ownerRoute, emailRoute } from "./routes";
 
@@ -7,26 +7,27 @@ const app = express();
 initDb();
 
 // --- CORS: ONLY allow https://ritzshrivastav.com
-const parsedOrigin = !!process.env.AllowedOrigins
-  ? process.env.AllowedOrigins?.split(",")
+const parsedOrigin = !!process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
   : "";
-app.use(
-  cors({
-    origin: parsedOrigin,
-    methods: ["POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: false,
-    maxAge: 86400,
-  })
-);
+console.log("Allowed Origins:", parsedOrigin);
+const corsOptions: CorsOptions = {
+  origin: (origin: string | undefined, cb) => {
+    // origin can be undefined for server-to-server/curl/postman
+    if (!origin) return cb(null, true);
 
-// (Optional) If you want to handle preflight explicitly:
-app.options("/api/send", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", parsedOrigin);
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.sendStatus(204);
-});
+    if (parsedOrigin.includes(origin)) return cb(null, true);
+
+    return cb(new Error(`CORS blocked for origin: ${origin}`), false);
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
+  maxAge: 86400, // 24 hours
+};
+app.use(cors(corsOptions));
 // --- JSON body parsing
 app.use(express.json());
 // --- Owner routes
