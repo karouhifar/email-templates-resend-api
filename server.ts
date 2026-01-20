@@ -12,7 +12,7 @@ const parsedOrigin = !!process.env.ALLOWED_ORIGINS
       .map((s) => s.trim())
       .filter(Boolean)
   : "";
-console.log("Allowed Origins:", parsedOrigin);
+
 const corsOptions: CorsOptions = {
   origin: (origin: string | undefined, cb) => {
     // origin can be undefined for server-to-server/curl/postman
