@@ -16,7 +16,8 @@
   },
   "scripts": {
     "start": "bun run server.ts",
-    "dev": "bun --watch run server.ts"
+    "dev": "bun --watch run server.ts",
+    "build": "bunx --bun prisma generate && bun install"
   },
   "devDependencies": {
     "@types/bun": "latest",
