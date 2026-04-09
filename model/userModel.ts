@@ -5,7 +5,6 @@ export interface IUser {
   name: string;
   email: string;
   isOwner: boolean;
-  location: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,14 +13,31 @@ export interface ICreateUser {
   name: string;
   email: string;
   isOwner?: boolean;
-  location: string;
   message: string;
+}
+
+export interface IUserMetadata {
+  id: string;
+  userId: string;
+  ipAddress: string;
+  location: string;
+  userDemo: Record<string, string | number> | null;
+  createdAt: Date;
+}
+
+export interface ICreateUserMetadata {
+  userId: string;
+  ipAddress: string;
+  location: string;
+  userDemo?: Record<string, string | number> | null;
 }
 
 export interface IUserModel {
   findAll(): Promise<IUser[]>;
   findById(id: string): Promise<IUser | null>;
   create(data: ICreateUser): Promise<IUser>;
+  createMetadata(data: ICreateUserMetadata): Promise<IUserMetadata>;
+  getMetadataByUserId(userId: string): Promise<IUserMetadata | null>;
 }
 
 export class UserModel implements IUserModel {
@@ -49,9 +65,25 @@ export class UserModel implements IUserModel {
         name: data.name,
         email: data.email,
         isOwner: data.isOwner ?? false,
-        location: data.location,
         message: data.message,
       },
+    });
+  }
+
+  async createMetadata(data: ICreateUserMetadata): Promise<IUserMetadata> {
+    return await this.prisma.userMetadata.create({
+      data: {
+        userId: data.userId,
+        ipAddress: data.ipAddress,
+        location: data.location,
+        userDemo: data.userDemo ?? null,
+      },
+    });
+  }
+
+  async getMetadataByUserId(userId: string): Promise<IUserMetadata | null> {
+    return await this.prisma.userMetadata.findUnique({
+      where: { userId },
     });
   }
 }

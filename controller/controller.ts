@@ -189,12 +189,17 @@ export const UserController = {
       const user = await model.create({
         name,
         email,
+        isOwner: isOwnerBoolean,
+        message,
+      });
+      await model.createMetadata({
+        userId: user.id,
+        ipAddress: ip,
         location:
           location && !isEmpty(location)
             ? `${location.city}, ${location.region}, ${location.country}`
             : "Unknown",
-        isOwner: isOwnerBoolean,
-        message,
+        userDemo: null,
       });
       res.status(201).json({ ok: true, data: user });
     } catch (error) {
