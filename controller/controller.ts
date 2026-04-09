@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
-import { OwnerDTO } from "../model";
+import { OwnerDTO, type ICreateUser, UserModel } from "../model";
+import { prisma } from "@/utils/prisma";
 import { Resend } from "resend";
-import { isEmpty } from "../utils/lib";
+import { getClientIp, isEmpty } from "../utils/lib";
 import React from "react";
 import { EmailTemplate } from "../views/template";
 
@@ -141,8 +142,8 @@ export const EmailController = {
                   contentType: "image/png",
                 },
               ],
-            })
-        )
+            }),
+        ),
       );
 
       if (email1?.error || email1?.error) {
@@ -157,6 +158,48 @@ export const EmailController = {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ ok: false, error: "Unexpected error" });
+    }
+  },
+};
+
+export const UserController = {
+  create: async (req: Request, res: Response) => {
+    try {
+      const model = new UserModel(prisma);
+      const { name, email, isOwner, message } = (req.body ?? {}) as ICreateUser;
+
+      if (!name || !email) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "Missing required fields" });
+      }
+      const ip = getClientIp(req);
+
+      const isOwnerBoolean = Boolean(isOwner);
+      let location = null;
+      if (ip !== "unknown") {
+        location = (await fetch(
+          `http://ip-api.com/json/${ip}?fields=status,message,country,region,city`,
+        ).then((r) => r.json())) as {
+          city: string;
+          region: string;
+          country: string;
+        };
+      }
+      const user = await model.create({
+        name,
+        email,
+        location:
+          location && !isEmpty(location)
+            ? `${location.city}, ${location.region}, ${location.country}`
+            : "Unknown",
+        isOwner: isOwnerBoolean,
+        message,
+      });
+      res.status(201).json({ ok: true, data: user });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ ok: false, error: "Internal server error" });
     }
   },
 };

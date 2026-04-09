@@ -1,7 +1,7 @@
 import express from "express";
 import cors, { type CorsOptions } from "cors";
 import { closeOnExit, initDb } from "@/db/database";
-import { ownerRoute, emailRoute } from "./routes";
+import { ownerRoute, emailRoute, userRoute } from "./routes";
 
 const app = express();
 initDb();
@@ -33,6 +33,7 @@ app.use(express.json());
 // --- Owner routes
 app.get("/", (_req, res) => res.send("OK"));
 app.use("/owners", ownerRoute);
+app.use("/user", userRoute);
 app.use("/api", emailRoute);
 
 // --- Start the server listening :
