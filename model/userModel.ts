@@ -29,7 +29,7 @@ export interface ICreateUserMetadata {
   userId: string;
   ipAddress: string;
   location: string;
-  userDemo?: Record<string, string | number> | null;
+  userDemo?: Record<string, string | number | null> | null;
 }
 
 export interface IUserModel {

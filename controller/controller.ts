@@ -4,7 +4,16 @@ import { prisma } from "@/utils/prisma";
 import { Resend } from "resend";
 import { getClientIp, isEmpty } from "../utils/lib";
 import React from "react";
-import { EmailTemplate } from "../views/template";
+import { EmailTemplate, NGSTemplate } from "../views/template";
+import { metadataQueueHandler } from "@/queue";
+import {
+  LIMITS,
+  safeBody,
+  sanitizeEmail,
+  sanitizeKey,
+  sanitizeLine,
+  sanitizeMultiline,
+} from "@/utils/sanitizer";
 
 export const OwnerController = {
   list: async (req: Request, res: Response) => {
@@ -49,18 +58,30 @@ export const OwnerController = {
 
 export const EmailController = {
   send: async (req: Request, res: Response) => {
-    const { key } = req.params;
-    const resend = new Resend(process.env.RESEND_API_KEY);
     try {
-      const { toEmail, firstName, message, subject } = req.body ?? {};
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const body = safeBody(req.body) as {
+        toEmail: string;
+        firstName: string;
+        message: string;
+        subject: string;
+      };
+
+      const key = sanitizeKey(req.params.key);
+
       if (!key)
         return res.status(400).json({ ok: false, error: "Missing key" });
+      const toEmail = sanitizeEmail(body.toEmail);
+      const firstName = sanitizeLine(body.firstName, LIMITS.NAME);
+      const subject = sanitizeLine(body.subject, LIMITS.SUBJECT);
+      const message = sanitizeMultiline(body.message, LIMITS.MESSAGE);
 
       const owner = await new OwnerDTO().findByKeyId(key);
-
       // Basic guard
       if (!toEmail || isEmpty(owner) || !owner?.getEmail) {
-        return res.status(400).json({ ok: false, error: "Missing toEmail" });
+        return res
+          .status(400)
+          .json({ ok: false, error: "Missing required fields" });
       }
 
       const recipients = [
@@ -72,14 +93,14 @@ export const EmailController = {
           ownerName: owner.getName,
           message,
         },
-        {
-          clientEmail: owner.getEmail,
-          ownerEmail: toEmail,
-          clientName: firstName,
-          owner: true,
-          ownerName: firstName,
-          message,
-        },
+        // {
+        //   clientEmail: owner.getEmail,
+        //   ownerEmail: toEmail,
+        //   clientName: firstName,
+        //   owner: true,
+        //   ownerName: firstName,
+        //   message,
+        // },
       ];
 
       //   {
@@ -128,20 +149,20 @@ export const EmailController = {
               from: `${ownerName} <${String(process.env.FROM_EMAIL)}>`,
               to: [clientEmail],
               subject: subject ?? "Thanks for reaching out!",
-              react: React.createElement(EmailTemplate, {
+              react: React.createElement(NGSTemplate, {
                 firstName: clientName ?? "Friend",
                 owner,
                 email: ownerEmail,
                 message: message ?? "It works! 🎉",
               }),
-              attachments: [
-                {
-                  path: "https://email.dreamsdigital.ca/emails/email-img-ritz.png",
-                  filename: "email-img-ritz.png",
-                  contentId: "logo-image",
-                  contentType: "image/png",
-                },
-              ],
+              // attachments: [
+              //   {
+              //     path: "https://email.dreamsdigital.ca/emails/email-img-ritz.png",
+              //     filename: "email-img-ritz.png",
+              //     contentId: "logo-image",
+              //     contentType: "image/png",
+              //   },
+              // ],
             }),
         ),
       );
@@ -176,35 +197,28 @@ export const UserController = {
       const ip = getClientIp(req);
 
       const isOwnerBoolean = Boolean(isOwner);
-      let location = null;
-      if (ip !== "unknown") {
-        location = (await fetch(
-          `http://ip-api.com/json/${ip}?fields=status,message,country,region,city`,
-        ).then((r) => r.json())) as {
-          city: string;
-          region: string;
-          country: string;
-        };
-      }
+
       const user = await model.create({
         name,
         email,
         isOwner: isOwnerBoolean,
         message,
       });
-      await model.createMetadata({
-        userId: user.id,
-        ipAddress: ip,
-        location:
-          location && !isEmpty(location)
-            ? `${location.city}, ${location.region}, ${location.country}`
-            : "Unknown",
-        userDemo: null,
-      });
+
+      metadataQueueHandler.enqueue(
+        {
+          userId: user.id,
+          name,
+          email,
+          ip,
+        },
+        model,
+      );
       res.status(201).json({ ok: true, data: user });
     } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ ok: false, error: "Internal server error" });
+      return res
+        .status(500)
+        .json({ ok: false, error: "Internal server error" });
     }
   },
 };
