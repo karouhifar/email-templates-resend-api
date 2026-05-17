@@ -4,7 +4,7 @@ import { prisma } from "@/utils/prisma";
 import { Resend } from "resend";
 import { getClientIp, isEmpty } from "../utils/lib";
 import React from "react";
-import { EmailTemplate, NGSTemplate } from "../views/template";
+import { EmailTemplate, NGSTemplate, QuotePdf } from "../views/template";
 import { metadataQueueHandler } from "@/queue";
 import {
   LIMITS,
@@ -180,6 +180,57 @@ export const EmailController = {
       console.error(err);
       return res.status(500).json({ ok: false, error: "Unexpected error" });
     }
+  },
+  sendQuote: async (req: Request, res: Response) => {
+    // Auth check — only Next.js can call this
+
+    if (
+      !req.headers["x-internal-secret"] ||
+      req.headers["x-internal-secret"] !== process.env.INTERNAL_API_SECRET
+    ) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const key = sanitizeKey(req.params.key);
+
+    if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
+
+    const referenceId = `QR-${Date.now().toString(36).toUpperCase()}`;
+
+    const owner = await new OwnerDTO().findByKeyId(key);
+    // Basic guard
+    if (!req.body.email || isEmpty(owner) || !owner?.getEmail) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "Missing required fields" });
+    }
+
+    // Generate PDF + send emails (your existing automation)
+    const pdfBuffer = await QuotePdf({ data: req.body, referenceId });
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const resEmail = await resend.emails.send({
+      from: `${owner.getName} <${String(process.env.FROM_EMAIL)}>`,
+      to: [req.body.email],
+      subject: `${req.body.fullName} : Query request received - Quote PDF attached`,
+      react: React.createElement(NGSTemplate, {
+        firstName: req.body.fullName ?? "Friend",
+        owner: true,
+        email: req.body.email,
+        message:
+          "Please find the attached PDF about your client quote details.",
+      }),
+      attachments: [
+        {
+          content: pdfBuffer, // <-- the PDF buffer
+          filename: `${referenceId}.pdf`,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+    if (resEmail?.error) {
+      return res.status(500).json({ ok: false, error: "Something went wrong" });
+    }
+    return res.status(200).json({ ok: true, message: "Email sent" });
   },
 };
 
