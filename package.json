@@ -19,7 +19,6 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "resend": "^6.4.2",
-    "serverless-http": "^4.0.0",
     "validator": "^13.15.35"
   },
   "scripts": {
