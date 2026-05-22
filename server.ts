@@ -1,4 +1,5 @@
 import express from "express";
+import serverless from "serverless-http";
 import cors, { type CorsOptions } from "cors";
 import helmet from "helmet";
 
@@ -71,8 +72,10 @@ app.use(
 
 // ---7.  Start the server listening :
 const PORT = Number(process.env.PORT || 3001);
-const server = app.listen(PORT, () => {
-  console.log(`✅ Bun/Express server listening on http://localhost:${PORT}`);
-});
 
-closeOnExit(server);
+export const handler = serverless(app);
+// const server = app.listen(PORT, () => {
+//   console.log(`✅ Bun/Express server listening on http://localhost:${PORT}`);
+// });
+
+// closeOnExit(server);

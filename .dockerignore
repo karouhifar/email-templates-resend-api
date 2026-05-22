@@ -2,12 +2,9 @@ node_modules
 .git
 .env
 .env.*
-dist
+Dockerfile
+.dockerignore
 *.log
 .DS_Store
-Dockerfile
-docker-compose.yml
-README.md
+dist
 coverage
-.vscode
-/generated/prisma

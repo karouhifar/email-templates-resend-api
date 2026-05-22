@@ -1,30 +1,29 @@
+# syntax=docker/dockerfile:1
+
 # ---- Base ----
-FROM oven/bun:1-alpine AS base
+FROM oven/bun:1.2-slim AS base
 WORKDIR /app
-
-# ---- Dependencies (cached layer) ----
-FROM base AS deps
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
-
-# ---- Build (if you have a build step) ----
-FROM base AS build
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-COPY . .
-RUN bun run build
-
-# ---- Runtime ----
-FROM base AS release
 ENV NODE_ENV=production
 
-# Copy only what's needed
+# ---- Install deps (prisma CLI is a prod dependency, so --production keeps it) ----
+FROM base AS deps
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile --production
+
+# ---- Build: generate the Prisma client against prod node_modules ----
+FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY package.json ./
+COPY . .
+# Dummy value for DATABASE_URL to allow Prisma Client generation. The actual value will be injected at Fly.io runtime.
+ARG DATABASE_URL="postgres://user:pass@localhost:5432/db"
+ENV DATABASE_URL=$DATABASE_URL
+RUN bunx prisma generate
 
-# Run as the built-in non-root 'bun' user
+# ---- Final runtime image ----
+FROM base AS release
+ENV PORT=3000
+COPY --from=build /app ./
 USER bun
-
 EXPOSE 3000
-ENTRYPOINT ["bun", "run", "dist/index.js"]
+CMD ["bun", "run", "server.ts"]
