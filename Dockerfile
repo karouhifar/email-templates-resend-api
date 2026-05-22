@@ -23,8 +23,7 @@ RUN bunx prisma generate
 FROM base AS release
 # Lambda Web Adapter MUST be in the final image — Lambda loads it as an extension at boot
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
-ENV PORT=3000
 COPY --from=build /app ./
 USER bun
-EXPOSE 3000
-CMD ["bun", "run", "server.ts"]
+ENV PORT=3000
+ENTRYPOINT ["bun", "run", "server.ts"]
