@@ -25,5 +25,6 @@ FROM base AS release
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
 COPY --from=build /app ./
 USER bun
-ENV PORT=3000
-ENTRYPOINT ["bun", "run", "server.ts"]
+ENV PORT=8080
+EXPOSE 8080
+CMD ["bun", "run", "start"]
