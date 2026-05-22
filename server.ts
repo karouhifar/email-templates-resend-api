@@ -45,7 +45,7 @@ app.use(express.json({ limit: "10kb" }));
 // --- 4. RATE LIMITING:
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // max 50 requests per IP per window
+  max: 15, // max 15 requests per IP per window
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
