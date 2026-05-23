@@ -10,7 +10,7 @@ RUN apt-get update -y && apt-get install -y openssl ca-certificates \
 
 # ---- Install deps (prisma CLI stays because it's a prod dependency) ----
 FROM base AS deps
-COPY package.json bun.lock* ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production
 
 # ---- Build: generate the Prisma client against prod node_modules ----
@@ -25,7 +25,5 @@ RUN bunx prisma generate
 # ---- Final runtime image (Fly.io persistent machine) ----
 FROM base AS release
 COPY --from=build /app ./
-USER bun
-ENV PORT=8080
-EXPOSE 8080
+
 CMD ["bun", "run", "start"]
