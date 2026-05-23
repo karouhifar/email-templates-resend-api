@@ -75,7 +75,7 @@ app.use(
 // ---7.  Start the server listening :
 const PORT = Number(process.env.PORT || 8080);
 const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Bun/Express server listening on http://localhost:${PORT}`);
+  console.log(`✅ Bun/Express server listening on http://0.0.0.0:${PORT}`);
 });
 
 closeOnExit(server);

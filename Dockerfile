@@ -25,5 +25,5 @@ RUN bunx prisma generate
 # ---- Final runtime image (Fly.io persistent machine) ----
 FROM base AS release
 COPY --from=build /app ./
-
+EXPOSE 8080
 CMD ["bun", "run", "start"]
