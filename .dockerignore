@@ -1,10 +1,107 @@
+# ───────────────────────────────
+# Dependencies
+# ───────────────────────────────
 node_modules
-.git
+bun.lockb
+.pnp
+.pnp.js
+jspm_packages
+
+# ───────────────────────────────
+# Bun
+# ───────────────────────────────
+.bun
+
+# ───────────────────────────────
+# Build output / artifacts
+# ───────────────────────────────
+dist
+build
+out
+*.tsbuildinfo
+.cache
+
+# ───────────────────────────────
+# Environment & secrets
+# ───────────────────────────────
 .env
 .env.*
-Dockerfile
-.dockerignore
+!.env.example
+*.pem
+*.key
+
+# ───────────────────────────────
+# Prisma
+# ───────────────────────────────
+# Keep schema.prisma & migrations in the image — those are needed at build/runtime.
+# Ignore only generated client output if you generate it inside the container.
+prisma/generated
+# Local SQLite dev databases (don't ship these)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/*.db
+prisma/dev.db*
+
+# ───────────────────────────────
+# Logs
+# ───────────────────────────────
+logs
 *.log
-.DS_Store
-dist
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+
+# ───────────────────────────────
+# Testing & coverage
+# ───────────────────────────────
 coverage
+.nyc_output
+*.lcov
+__tests__
+**/*.test.ts
+**/*.spec.ts
+
+# ───────────────────────────────
+# Editor / IDE
+# ───────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ───────────────────────────────
+# Version control
+# ───────────────────────────────
+.git
+.gitignore
+.gitattributes
+.github
+
+# ───────────────────────────────
+# Docker
+# ───────────────────────────────
+Dockerfile
+Dockerfile.*
+.dockerignore
+docker-compose*.yml
+compose*.yml
+
+# ───────────────────────────────
+# Docs & misc
+# ───────────────────────────────
+README.md
+*.md
+LICENSE
+.editorconfig
+.prettierrc*
+.prettierignore
+.eslintrc*
+.eslintcache
+.husky
