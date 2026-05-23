@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { closeOnExit, initDb } from "@/db/database";
 import { ownerRoute, emailRoute, userRoute } from "./routes";
 import rateLimit from "express-rate-limit";
+import { prisma } from "./utils/prisma";
 
 const app = express();
 // initDb();
@@ -53,7 +54,8 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 // --- 5. Owner routes
 app.get("/", (_req, res) => res.send("OK"));
-app.get("/health", (_req, res) => {
+app.get("/health", globalLimiter, async (_req, res) => {
+  await prisma.$queryRaw`SELECT 1`;
   res.status(200).json({ status: "healthy" });
 });
 app.use("/owners", ownerRoute);
