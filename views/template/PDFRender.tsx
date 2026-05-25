@@ -115,7 +115,7 @@ export function QuotePdfReact({
   return (
     <Document
       title={`Quote Request — ${data.fullName}`}
-      author="Your Company"
+      author="North GTA Steel Building"
       subject="Building quote request"
     >
       <Page size="LETTER" style={styles.page}>
@@ -128,7 +128,7 @@ export function QuotePdfReact({
                 style={styles.logo}
               />
             )}
-            <Text style={styles.brand}>Your Company</Text>
+            <Text style={styles.brand}>North GTA Steel Building</Text>
             <Text style={styles.brandSub}>Quote request summary</Text>
           </View>
           <View style={styles.meta}>
