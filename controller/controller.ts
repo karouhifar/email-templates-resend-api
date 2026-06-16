@@ -210,7 +210,7 @@ export const EmailController = {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const resEmail = await resend.emails.send({
       from: `${owner.getName} <${String(process.env.FROM_EMAIL)}>`,
-      to: [req.body.email],
+      to: [owner.getEmail],
       subject: `${req.body.fullName} : Query request received - Quote PDF attached`,
       react: React.createElement(NGSTemplate, {
         firstName: req.body.fullName ?? "Friend",
