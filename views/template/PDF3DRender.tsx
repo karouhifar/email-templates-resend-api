@@ -58,6 +58,16 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
 
+  imagesRow: { flexDirection: "row", gap: 8, marginTop: 4 },
+  snapshot: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: 4,
+    padding: 6,
+  },
+  snapshotImg: { width: "100%", height: 150, objectFit: "contain" },
+
   table: {
     border: "1px solid #e2e8f0",
     borderRadius: 4,
@@ -149,6 +159,10 @@ export type DesignQuoteData = {
     manDoors: number;
     windows: number;
   };
+  images?: {
+    imgType: string;
+    imgURL: string;
+  }[];
   meta?: {
     source?: string;
     submittedAt?: string;
@@ -178,10 +192,24 @@ function ColorRow({ label, hex }: { label: string; hex?: string }) {
   );
 }
 
+const ALLOWED_IMG_TYPES = new Set(["png", "jpg", "jpeg"]);
+const isSafeImgUrl = (url: unknown): url is string =>
+  typeof url === "string" && /^https:\/\//.test(url);
+
 export function DesignQuotePdfReact({ data, referenceId }: Props) {
   const { lead, config, summary, meta } = data;
   const baseUrl = process.env.S3_URL;
-  const submittedAt = meta?.submittedAt ? new Date(meta.submittedAt) : new Date();
+  const submittedAt = meta?.submittedAt
+    ? new Date(meta.submittedAt)
+    : new Date();
+
+  const images = (data.images ?? [])
+    .filter(
+      (img) =>
+        ALLOWED_IMG_TYPES.has(String(img?.imgType).toLowerCase()) &&
+        isSafeImgUrl(img?.imgURL),
+    )
+    .slice(0, 4);
 
   const addons: string[] = [];
   if (config.addons.leanTo) addons.push("Lean-to");
@@ -267,6 +295,20 @@ export function DesignQuotePdfReact({ data, referenceId }: Props) {
           </View>
         </View>
 
+        {/* Design previews */}
+        {images.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Design previews</Text>
+            <View style={styles.imagesRow}>
+              {images.map((img, i) => (
+                <View key={i} style={styles.snapshot}>
+                  <Image src={img.imgURL} style={styles.snapshotImg} />
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Colors */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Colors</Text>
@@ -349,7 +391,7 @@ export function DesignQuotePdfReact({ data, referenceId }: Props) {
           </View>
         )}
 
-        <Text style={styles.footer}>
+        <Text style={styles.footer} fixed>
           This document was generated from the 3D building designer on
           northgtasteel.ca.
         </Text>
