@@ -58,9 +58,14 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
 
-  imagesRow: { flexDirection: "row", gap: 8, marginTop: 4 },
+  imagesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 4,
+  },
   snapshot: {
-    flex: 1,
+    width: "48.5%",
     backgroundColor: "#f8fafc",
     border: "1px solid #e2e8f0",
     borderRadius: 4,
@@ -194,7 +199,8 @@ function ColorRow({ label, hex }: { label: string; hex?: string }) {
 
 const ALLOWED_IMG_TYPES = new Set(["png", "jpg", "jpeg"]);
 const isSafeImgUrl = (url: unknown): url is string =>
-  typeof url === "string" && /^https:\/\//.test(url);
+  typeof url === "string" &&
+  (/^https:\/\//.test(url) || /^data:image\//.test(url));
 
 export function DesignQuotePdfReact({ data, referenceId }: Props) {
   const { lead, config, summary, meta } = data;
