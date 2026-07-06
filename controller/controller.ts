@@ -4,7 +4,13 @@ import { prisma } from "@/utils/prisma";
 import { Resend } from "resend";
 import { getClientIp, isEmpty } from "../utils/lib";
 import React from "react";
-import { EmailTemplate, NGSTemplate, QuotePdf } from "../views/template";
+import {
+  EmailTemplate,
+  NGSTemplate,
+  QuotePdf,
+  DesignQuotePdf,
+  type DesignQuoteData,
+} from "../views/template";
 import { metadataQueueHandler } from "@/queue";
 import {
   LIMITS,
@@ -231,6 +237,74 @@ export const EmailController = {
       return res.status(500).json({ ok: false, error: "Something went wrong" });
     }
     return res.status(200).json({ ok: true, message: "Email sent" });
+  },
+  send3dDesignQuote: async (req: Request, res: Response) => {
+    try {
+      // Auth check — only Next.js can call this
+      if (
+        !req.headers["x-internal-secret"] ||
+        req.headers["x-internal-secret"] !== process.env.INTERNAL_API_SECRET
+      ) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const key = sanitizeKey(req.params.key);
+
+      if (!key)
+        return res.status(400).json({ ok: false, error: "Missing key" });
+
+      const body = safeBody(req.body) as unknown as DesignQuoteData;
+      const leadEmail = sanitizeEmail(body?.lead?.email);
+      const leadName =
+        sanitizeLine(body?.lead?.name, LIMITS.NAME) ?? "Friend";
+
+      const owner = await new OwnerDTO().findByKeyId(key);
+      // Basic guard
+      if (
+        !leadEmail ||
+        !body?.config ||
+        !body?.summary ||
+        isEmpty(owner) ||
+        !owner?.getEmail
+      ) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "Missing required fields" });
+      }
+
+      const referenceId = `3D-${Date.now().toString(36).toUpperCase()}`;
+
+      const pdfBuffer = await DesignQuotePdf({ data: body, referenceId });
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const resEmail = await resend.emails.send({
+        from: `${owner.getName} <${String(process.env.FROM_EMAIL)}>`,
+        to: [owner.getEmail],
+        subject: `${leadName} : 3D design quote request - PDF attached`,
+        react: React.createElement(NGSTemplate, {
+          firstName: leadName,
+          owner: true,
+          email: leadEmail,
+          message:
+            "Please find the attached PDF with the 3D designer configuration and client details.",
+        }),
+        attachments: [
+          {
+            content: pdfBuffer,
+            filename: `${referenceId}.pdf`,
+            contentType: "application/pdf",
+          },
+        ],
+      });
+      if (resEmail?.error) {
+        return res
+          .status(500)
+          .json({ ok: false, error: "Something went wrong" });
+      }
+      return res.status(200).json({ ok: true, message: "Email sent" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ ok: false, error: "Unexpected error" });
+    }
   },
 };
 
