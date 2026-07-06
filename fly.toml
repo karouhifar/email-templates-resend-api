@@ -31,4 +31,4 @@ primary_region = 'yyz'
   cpus = 1
   memory_mb = 2048
   processes = ['app']
-  size = 'performance-cpu-1x'
+  size = 'performance-1x'
