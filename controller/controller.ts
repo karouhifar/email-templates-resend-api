@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { OwnerDTO, type ICreateUser, UserModel } from "../model";
 import { prisma } from "@/utils/prisma";
 import { Resend } from "resend";
-import { getClientIp, isEmpty } from "../utils/lib";
+import { getClientIp, isEmpty, resolveTemplate, TEMPLATE_REGISTRY } from "../utils/lib";
 import React from "react";
 import {
   EmailTemplate,
@@ -62,7 +62,10 @@ export const OwnerController = {
   },
 };
 
+
+
 export const EmailController = {
+  
   send: async (req: Request, res: Response) => {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -83,6 +86,15 @@ export const EmailController = {
       const message = sanitizeMultiline(body.message, LIMITS.MESSAGE);
 
       const owner = await new OwnerDTO().findByKeyId(key);
+      if (!toEmail || isEmpty(owner) || !owner?.getEmail) {
+          return res
+                .status(400)
+                .json({ ok: false, error: "Missing required fields" });
+      }
+      const templateKey = (owner?.getEmailTemplate ?? "NGS").toUpperCase();
+      const { component, buildProps, attachments } = resolveTemplate(
+           owner.getEmailTemplate,
+      );
       // Basic guard
       if (!toEmail || isEmpty(owner) || !owner?.getEmail) {
         return res
@@ -99,55 +111,24 @@ export const EmailController = {
           ownerName: owner.getName,
           message,
         },
-        // {
-        //   clientEmail: owner.getEmail,
-        //   ownerEmail: toEmail,
-        //   clientName: firstName,
-        //   owner: true,
-        //   ownerName: firstName,
-        //   message,
-        // },
+        {
+          clientEmail: owner.getEmail,
+          ownerEmail: toEmail,
+          clientName: firstName,
+          owner: true,
+          ownerName: firstName,
+          message,
+        },
       ];
 
-      //   {
-      //     from: `${owner?.getName} <${String(process.env.FROM_EMAIL)}>`,
-      //     to: [toEmail],
 
-      //     subject: subject ?? "Thanks for reaching out!",
-      //     // You can pass a React element directly:
-      //     react: React.createElement(EmailTemplate, {
-      //       firstName: firstName ?? "Friend",
-      //       message: message ?? "It works! 🎉",
-      //       email: owner?.getEmail,
-      //     }),
-      //   },
-      //   {
-      //     from: `${firstName} <${String(process.env.FROM_EMAIL)}>`,
-      //     to: [owner?.getEmail],
-      //     subject: subject ?? "Thanks for reaching out!",
-      //     react: React.createElement(EmailTemplate, {
-      //       firstName: firstName ?? "Friend",
-      //       owner: true,
-      //       email: toEmail,
-      //       message: message ?? "It works! 🎉",
-      //     }),
-      //     attachments: [
-      //       {
-      //         path: "https://email.dreamsdigital.ca/emails/email-img-ritz.png",
-      //         filename: "email-img-ritz.png",
-      //         contentId: "logo-image",
-      //         contentType: "image/png",
-      //       },
-      //     ],
-      //   },
-      // ]);
       const [email1, email2] = await Promise.all(
         recipients.map(
           ({
             clientEmail,
             ownerEmail,
             clientName,
-            owner,
+            owner: isOwner,
             ownerName,
             message,
           }) =>
@@ -155,20 +136,18 @@ export const EmailController = {
               from: `${ownerName} <${String(process.env.FROM_EMAIL)}>`,
               to: [clientEmail],
               subject: subject ?? "Thanks for reaching out!",
-              react: React.createElement(NGSTemplate, {
-                firstName: clientName ?? "Friend",
-                owner,
-                email: ownerEmail,
-                message: message ?? "It works! 🎉",
-              }),
-              // attachments: [
-              //   {
-              //     path: "https://email.dreamsdigital.ca/emails/email-img-ritz.png",
-              //     filename: "email-img-ritz.png",
-              //     contentId: "logo-image",
-              //     contentType: "image/png",
-              //   },
-              // ],
+              react: React.createElement(
+                component,
+                buildProps({
+                  firstName: clientName ?? "Friend",
+                  message,
+                  clientEmail,
+                  ownerEmail,
+                  ownerName: ownerName ?? "Owner",
+                  isOwner,
+                }),
+              ),
+              ...(attachments ? { attachments } : {}),
             }),
         ),
       );

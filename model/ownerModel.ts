@@ -1,3 +1,4 @@
+import { EmailTemplate as EmailTemplateEnum } from "@/generated/prisma/client";
 import { prisma } from "@/utils/prisma";
 import { nanoid } from "nanoid";
 import { couldStartTrivia } from "typescript";
@@ -18,6 +19,7 @@ export class Owner {
   private email: string;
   private created_at?: string;
   private updated_at?: string;
+  private emailTemplate?: EmailTemplateEnum;
 
   constructor(
     key_id: string,
@@ -25,7 +27,8 @@ export class Owner {
     isOwner: boolean,
     email: string,
     created_at?: string,
-    updated_at?: string
+    updated_at?: string,
+    emailTemplate?: EmailTemplateEnum,
   ) {
     this.key_id = key_id ?? nanoid(10);
     this.name = name;
@@ -33,6 +36,7 @@ export class Owner {
     this.email = email;
     this.created_at = created_at || new Date().toISOString();
     this.updated_at = updated_at || new Date().toISOString();
+    this.emailTemplate = emailTemplate ?? EmailTemplateEnum.NGS;
   }
 
   get getKeyId(): string {
@@ -57,6 +61,10 @@ export class Owner {
     return this.updated_at;
   }
 
+  get getEmailTemplate(): EmailTemplateEnum {
+    return this.emailTemplate ?? EmailTemplateEnum.NGS;
+  }
+
   static fromRow(row: Owner) {
     return new Owner(
       row.key_id,
@@ -64,7 +72,8 @@ export class Owner {
       row.isOwner ?? row.isOwner ?? 0,
       row.email,
       row.created_at ?? new Date().toISOString(),
-      row.updated_at ?? new Date().toISOString()
+      row.updated_at ?? new Date().toISOString(),
+      row.emailTemplate ?? EmailTemplateEnum.NGS,
     );
   }
 }
