@@ -133,8 +133,8 @@ export default function EmailTemplate({
               >
                 {/* Eyebrow */}
                 <Text
-                  className="text-accentSoft text-[11px] font-bold uppercase m-0 mb-[10px]"
-                  style={{ letterSpacing: "1.5px" }}
+                  className="text-[11px] font-bold uppercase m-0 mb-[10px]"
+                  style={{ letterSpacing: "1.5px", color: brand.text }}
                 >
                   {owner ? "New enquiry" : "Message received"}
                 </Text>
