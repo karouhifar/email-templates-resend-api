@@ -39,7 +39,7 @@ const brand = {
   surfaceAlt: "#131333",
   border: "#26264f",
   accent: "#6e4df5",
-  accentSoft: "#9a83fa",
+  accentSoft: "#f5f6ff",
   heading: "#f5f6ff",
   text: "#c3c6e0",
   muted: "#7c7fa3",
