@@ -70,7 +70,7 @@ export const TEMPLATE_REGISTRY = {
     }),
     attachments: [
       {
-        path: "https://email.dreamsdigital.ca/emails/email-img-ritz.png",
+        path: "https://www.kamyabrouhifar.ca/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.a515379d.png&w=256&q=75",
         filename: "email-img-ritz.png",
         contentId: "logo-image",
         contentType: "image/png",
