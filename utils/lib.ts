@@ -64,7 +64,7 @@ export const TEMPLATE_REGISTRY = {
     component: EmailTemplate,
     buildProps: (a: TemplateArgs) => ({
       firstName: a.firstName ?? "Friend",
-      email: a.isOwner ? a.clientEmail : a.ownerEmail,
+      email: !a.isOwner ? a.clientEmail : a.ownerEmail,
       message: a.message ?? "It works! 🎉",
       owner: a.isOwner,
     }),
