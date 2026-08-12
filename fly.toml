@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for email-templates-resend-api on 2026-06-17T17:24:06Z
+# fly.toml app configuration file generated for email-templates-resend-api on 2026-07-06T20:54:09Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -14,7 +14,7 @@ primary_region = 'yyz'
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
@@ -24,3 +24,11 @@ primary_region = 'yyz'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'performance'
+  cpus = 1
+  memory_mb = 2048
+  processes = ['app']
+  size = 'performance-1x'
