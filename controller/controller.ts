@@ -91,7 +91,7 @@ export const EmailController = {
                 .status(400)
                 .json({ ok: false, error: "Missing required fields" });
       }
-      const templateKey = (owner?.getEmailTemplate ?? "NGS").toUpperCase();
+
       const { component, buildProps, attachments } = resolveTemplate(
            owner.getEmailTemplate,
       );
