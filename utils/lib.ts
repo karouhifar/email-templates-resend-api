@@ -7,7 +7,6 @@ import {
   DesignQuotePdf,
   type DesignQuoteData,
 } from "../views/template";
-import type { NullsOrder } from "@/generated/prisma/internal/prismaNamespaceBrowser";
 
 export const isEmpty = function (data: any): boolean {
   return Object.keys(data).length === 0;
@@ -67,10 +66,11 @@ export const TEMPLATE_REGISTRY = {
       firstName: a.firstName ?? "Friend",
       email: a.isOwner ? a.clientEmail : a.ownerEmail,
       message: a.message ?? "It works! 🎉",
+      owner: a.isOwner,
     }),
     attachments: [
       {
-        path: "https://www.kamyabrouhifar.ca/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.a515379d.png&w=256&q=75",
+        path: "https://email.dreamsdigital.ca/emails/email-img-ritz.png",
         filename: "email-img-ritz.png",
         contentId: "logo-image",
         contentType: "image/png",
