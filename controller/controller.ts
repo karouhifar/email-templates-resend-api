@@ -12,6 +12,7 @@ import {
   type DesignQuoteData,
 } from "../views/template";
 import { metadataQueueHandler } from "@/queue";
+import { normalizeQuotePayload } from "@/utils/quote";
 import {
   LIMITS,
   safeBody,
@@ -167,55 +168,75 @@ export const EmailController = {
     }
   },
   sendQuote: async (req: Request, res: Response) => {
-    // Auth check — only Next.js can call this
+    try {
+      // Auth check — only Next.js can call this
+      if (
+        !req.headers["x-internal-secret"] ||
+        req.headers["x-internal-secret"] !== process.env.INTERNAL_API_SECRET
+      ) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
 
-    if (
-      !req.headers["x-internal-secret"] ||
-      req.headers["x-internal-secret"] !== process.env.INTERNAL_API_SECRET
-    ) {
-      return res.status(401).json({ error: "Unauthorized" });
+      const key = sanitizeKey(req.params.key);
+
+      if (!key)
+        return res.status(400).json({ ok: false, error: "Missing key" });
+
+      // Re-validate the whole payload server-side before it reaches the PDF
+      const parsed = normalizeQuotePayload(req.body);
+      if (!parsed.ok) {
+        return res.status(400).json({ ok: false, error: parsed.error });
+      }
+      const quote = parsed.data;
+
+      const referenceId = `QR-${Date.now().toString(36).toUpperCase()}`;
+
+      const owner = await new OwnerDTO().findByKeyId(key);
+      // Basic guard
+      if (isEmpty(owner) || !owner?.getEmail) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "Missing required fields" });
+      }
+
+      const submittedAt = new Date();
+
+      // Generate PDF + send emails (your existing automation)
+      const pdfBuffer = await QuotePdf({
+        data: quote,
+        referenceId,
+        submittedAt,
+      });
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const resEmail = await resend.emails.send({
+        from: `${owner.getName} <${String(process.env.FROM_EMAIL)}>`,
+        to: [owner.getEmail],
+        subject: `${quote.fullName} : ${quote.width}' x ${quote.length}' ${quote.buildingType} quote request (${referenceId})`,
+        react: React.createElement(NGSTemplate, {
+          firstName: quote.fullName,
+          owner: true,
+          email: quote.email,
+          message:
+            "Please find the attached PDF about your client quote details.",
+        }),
+        attachments: [
+          {
+            content: pdfBuffer, // <-- the PDF buffer
+            filename: `${referenceId}-${quote.fullName.replace(/[^A-Za-z0-9]+/g, "-")}.pdf`,
+            contentType: "application/pdf",
+          },
+        ],
+      });
+      if (resEmail?.error) {
+        return res
+          .status(500)
+          .json({ ok: false, error: "Something went wrong" });
+      }
+      return res.status(200).json({ ok: true, message: "Email sent" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ ok: false, error: "Unexpected error" });
     }
-
-    const key = sanitizeKey(req.params.key);
-
-    if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
-
-    const referenceId = `QR-${Date.now().toString(36).toUpperCase()}`;
-
-    const owner = await new OwnerDTO().findByKeyId(key);
-    // Basic guard
-    if (!req.body.email || isEmpty(owner) || !owner?.getEmail) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "Missing required fields" });
-    }
-
-    // Generate PDF + send emails (your existing automation)
-    const pdfBuffer = await QuotePdf({ data: req.body, referenceId });
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const resEmail = await resend.emails.send({
-      from: `${owner.getName} <${String(process.env.FROM_EMAIL)}>`,
-      to: [owner.getEmail],
-      subject: `${req.body.fullName} : Query request received - Quote PDF attached`,
-      react: React.createElement(NGSTemplate, {
-        firstName: req.body.fullName ?? "Friend",
-        owner: true,
-        email: req.body.email,
-        message:
-          "Please find the attached PDF about your client quote details.",
-      }),
-      attachments: [
-        {
-          content: pdfBuffer, // <-- the PDF buffer
-          filename: `${referenceId}.pdf`,
-          contentType: "application/pdf",
-        },
-      ],
-    });
-    if (resEmail?.error) {
-      return res.status(500).json({ ok: false, error: "Something went wrong" });
-    }
-    return res.status(200).json({ ok: true, message: "Email sent" });
   },
   send3dDesignQuote: async (req: Request, res: Response) => {
     try {
